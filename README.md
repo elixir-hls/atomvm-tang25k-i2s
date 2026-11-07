@@ -17,7 +17,7 @@ common to both.
 ```elixir
 use EHLS, blocks: [EHLS.I2S]
 
-defpipeline tone do
+definstance tone do
   ticks(48_000) |> tone_wave() |> i2s_out()
 end
 ```
@@ -42,7 +42,7 @@ Other pins: `use EHLS, blocks: [{EHLS.I2S, pins: [dout: "j5:7", ...]}]`.
 
 ## Example
 
-`examples/tone_demo.ex`: a 440 Hz triangle from a defhw oscillator (its phase the kernel's
+`examples/tone_demo.ex`: a 440 Hz triangle from a defhls oscillator (its phase the kernel's
 state), `ticks(48_000) |> tone_wave() |> i2s_out()`.
 
 ```sh
