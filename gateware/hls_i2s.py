@@ -72,7 +72,8 @@ class I2SOut(LiteXModule):
         self.specials += Instance("audio_out",
             p_NO_VOL=1,
             i_clk=ClockSignal(), i_en=enable, i_edge_inc=edge_inc, i_vol=12,
-            i_in_valid=self.sink.valid & enable,
+            # a frame is taken when valid and ready: a waiting sink must not write the frame it holds again
+            i_in_valid=self.sink.valid & self.sink.ready & enable,
             i_in_left=self.sink.data[0:16], i_in_right=self.sink.data[16:32],
             o_bclk=pads.bclk, o_lrclk=pads.lrclk, o_dout=pads.dout,
             o_drops=self.drops, o_repeats=self.repeats,
