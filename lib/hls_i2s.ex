@@ -10,9 +10,10 @@ defmodule EHLS.I2S do
 
     * `i2s_out()`: sink, stereo frames `{R[31:16], L[15:0]}` (signed 16 bit), I2S at 48 kHz.
       Its FIFO (1024 frames) adapts the rate: it is always ready, as a source that cannot wait
-      (a tuner in the FPGA) needs. With `wait: true` it waits while the FIFO is at its high
-      mark (768): for frames that come faster than they are played, as batches from a stage
-      on the CPU before it, which would be lost beyond the FIFO otherwise.
+      (a tuner in the FPGA) needs. With `wait: true` the FIFO is 4096 frames (85 ms) and it waits
+      while the FIFO is at its high mark (3072): for frames that come faster than they are
+      played, as batches from a stage on the CPU before it, which would be lost beyond the FIFO
+      otherwise, and whose next batch may start late.
   """
   @behaviour EHLS.Blocks
 

@@ -23,7 +23,8 @@ RTL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rtl")
 # i2s_out waits (sink.ready) while its FIFO is at the high mark: for frames that come faster
 # than they are played, in batches from the CPU (a stage on: :cpu before it). Without it the
 # sink is always ready and the FIFO adapts the rate, as a source that cannot wait (the tuner in
-# the FPGA) needs; frames that come in a batch are then lost beyond the FIFO's 1024.
+# the FPGA) needs; frames that come in a batch are then lost beyond the FIFO's 1024. With it the
+# FIFO is 4096 frames (85 ms), for a batch that starts late.
 WAIT = False
 
 # signal -> LiteX connector pin
@@ -55,7 +56,9 @@ class I2SOut(LiteXModule):
     """Sink: stereo frames {R[31:16], L[15:0]} (signed 16-bit), played at 48 kHz on the I2S
     pins (audio_out.v: FIFO with rate adaptation; always ready, or with WAIT ready while the FIFO
     is below its high mark, HI, so that it never drops for being full)."""
-    HI = 768
+    # with WAIT a deeper FIFO: frames from the CPU come a batch at a time, and the next batch may start late (AtomVM
+    # has one scheduler); 4096 frames are 85 ms at 48 kHz
+    AW, HI, LO = (12, 3072, 1024) if WAIT else (10, 768, 256)
     def __init__(self, soc, enable, fs=48000):
         platform = soc.platform
         platform.add_extension([
@@ -66,11 +69,11 @@ class I2SOut(LiteXModule):
         self.sink = stream.Endpoint([("data", 32)])
         edge_inc = int(round(2**32 * 128 * fs / soc.sys_clk_freq))
         self.drops, self.repeats, self.underruns, self.overruns = (Signal(16) for _ in range(4))
-        level = Signal(11)
+        level = Signal(self.AW + 1)
         # stopped (enable 0), the frames are taken and not played, as without WAIT
         self.comb += self.sink.ready.eq(~enable | (level < self.HI) if WAIT else 1)
         self.specials += Instance("audio_out",
-            p_NO_VOL=1,
+            p_NO_VOL=1, p_AW=self.AW, p_HI=self.HI, p_LO=self.LO,
             i_clk=ClockSignal(), i_en=enable, i_edge_inc=edge_inc, i_vol=12,
             # a frame is taken when valid and ready: a waiting sink must not write the frame it holds again
             i_in_valid=self.sink.valid & self.sink.ready & enable,
