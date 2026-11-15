@@ -92,10 +92,9 @@ class I2SOut(LiteXModule):
         # stopped (enable 0), the frames are taken and not played, as without WAIT
         self.comb += self.sink.ready.eq(~enable | (level < self.HI) if WAIT else 1)
         # audio_out as usb-rtl-sdr-tang25k builds it, with its volume stage at 0 dB (vol 12: the sample as it is).
-        # Built without it (NO_VOL=1), the right channel clicked now and then on the board (several a second, the
-        # same size at any volume, none at volume 0) while the frames going in were clean: the frame read from the
-        # FIFO goes out on the right slot 64 BCLK edges after the left, and in that build something changed it
-        # in between.
+        # Without it (NO_VOL=1) the right channel clicks now and then on the board (several a second, the same size
+        # at any volume, none at volume 0) while the frames going in are clean: the frame read from the FIFO goes
+        # out on the right slot 64 BCLK edges after the left, and in such a build it can change in between.
         self.specials += Instance("audio_out",
             p_NO_VOL=0, p_AW=self.AW, p_HI=self.HI, p_LO=self.LO,
             i_clk=ClockSignal(), i_en=enable, i_edge_inc=edge_inc, i_vol=12,
