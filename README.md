@@ -4,6 +4,12 @@ I2S audio for [atomvm-tang25k-hls](https://github.com/elixir-hls/atomvm-tang25k-
 the package covers I2S as a whole, its blocks one direction each. Supported: output, a
 pipeline sink for I2S amplifiers such as the MAX98357A.
 
+In the application's mix.exs, beside its target:
+
+```elixir
+{:atomvm_tang25k_i2s, "~> 0.1"}
+```
+
 | Block | Direction | |
 |---|---|---|
 | `i2s_out()` | sink: FPGA -> amplifier / DAC | supported |
